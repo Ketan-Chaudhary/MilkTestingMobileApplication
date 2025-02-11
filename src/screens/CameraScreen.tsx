@@ -36,7 +36,7 @@ const CameraScreen: React.FC<Props> = ({route}) => {
     } as any);
 
     try {
-      const response = await fetch('http://127.0.0.1:8160/predict', {
+      const response = await fetch('http://43.204.214.166:8160/predict', {
         method: 'POST',
         body: formData,
       });

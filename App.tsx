@@ -1,15 +1,15 @@
-import React from "react";
-import { NavigationContainer } from "@react-navigation/native";
-import { createStackNavigator } from "@react-navigation/stack";
-import Home from "./screens/Home";
-import CameraScreen from "./screens/CameraScreen";
+import React from 'react';
+import {NavigationContainer} from '@react-navigation/native';
+import {createNativeStackNavigator} from '@react-navigation/native-stack';
+import Home from './src/screens/Home';
+import CameraScreen from './src/screens/CameraScreen';
 
 export type RootStackParamList = {
   Home: undefined;
-  Camera: { test: string };
+  Camera: {test: string};
 };
 
-const Stack = createStackNavigator<RootStackParamList>();
+const Stack = createNativeStackNavigator<RootStackParamList>();
 
 const App: React.FC = () => {
   return (

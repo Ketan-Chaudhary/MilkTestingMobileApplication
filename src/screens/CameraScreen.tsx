@@ -6,6 +6,7 @@ import {
   Image,
   StyleSheet,
   ActivityIndicator,
+  Alert,
 } from 'react-native';
 import {launchCamera, CameraOptions} from 'react-native-image-picker';
 import {NativeStackScreenProps} from '@react-navigation/native-stack';
@@ -24,22 +25,23 @@ const CameraScreen: React.FC<Props> = ({route, navigation}) => {
       saveToPhotos: false,
     };
 
-    launchCamera(options, async response => {
+    launchCamera(options, response => {
       if (response.assets && response.assets.length > 0) {
         const uri = response.assets[0]?.uri ?? null;
         setImage(uri);
-        if (uri) await analyzeImage(uri);
+      } else if (response.errorCode) {
+        Alert.alert('Error', 'Failed to capture image. Please try again.');
       }
     });
   };
 
-  const analyzeImage = async (imageUri: string) => {
-    if (!imageUri) return;
+  const analyzeImage = async () => {
+    if (!image) return;
 
     setLoading(true);
     const formData = new FormData();
     formData.append('image', {
-      uri: imageUri,
+      uri: image,
       type: 'image/jpeg',
       name: 'test.jpg',
     } as any);
@@ -55,6 +57,7 @@ const CameraScreen: React.FC<Props> = ({route, navigation}) => {
       navigation.navigate('Results', {result: data.result}); // Navigate to Results screen
     } catch (error) {
       console.error('Error analyzing image:', error);
+      Alert.alert('Error', 'Failed to analyze image. Please try again.');
     } finally {
       setLoading(false);
     }
@@ -63,15 +66,35 @@ const CameraScreen: React.FC<Props> = ({route, navigation}) => {
   return (
     <View style={styles.container}>
       <Text style={styles.title}>{route.params.test} Test</Text>
-      {image && <Image source={{uri: image}} style={styles.image} />}
+
+      {image ? (
+        <Image source={{uri: image}} style={styles.image} />
+      ) : (
+        <View style={styles.placeholder}>
+          <Text style={styles.placeholderText}>No image captured</Text>
+        </View>
+      )}
+
       <TouchableOpacity
         style={styles.button}
         onPress={captureImage}
         disabled={loading}>
         <Text style={styles.buttonText}>
-          {loading ? 'Processing...' : 'Capture Image'}
+          {image ? 'Recapture Image' : 'Capture Image'}
         </Text>
       </TouchableOpacity>
+
+      {image && (
+        <TouchableOpacity
+          style={[styles.button, styles.analyzeButton]}
+          onPress={analyzeImage}
+          disabled={loading}>
+          <Text style={styles.buttonText}>
+            {loading ? 'Analyzing...' : 'Analyze Image'}
+          </Text>
+        </TouchableOpacity>
+      )}
+
       {loading && <ActivityIndicator size="large" color="#6200ee" />}
     </View>
   );
@@ -92,10 +115,26 @@ const styles = StyleSheet.create({
     color: '#6200ee',
   },
   image: {
-    width: 200,
-    height: 200,
+    width: 300,
+    height: 300,
     marginTop: 10,
     borderRadius: 10,
+    borderWidth: 2,
+    borderColor: '#6200ee',
+  },
+  placeholder: {
+    width: 300,
+    height: 300,
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: '#e0e0e0',
+    borderRadius: 10,
+    borderWidth: 2,
+    borderColor: '#6200ee',
+  },
+  placeholderText: {
+    fontSize: 16,
+    color: '#666',
   },
   button: {
     backgroundColor: '#6200ee',
@@ -104,6 +143,9 @@ const styles = StyleSheet.create({
     marginVertical: 10,
     alignItems: 'center',
     width: '100%',
+  },
+  analyzeButton: {
+    backgroundColor: '#03dac6', // Teal color for the analyze button
   },
   buttonText: {
     color: '#fff',

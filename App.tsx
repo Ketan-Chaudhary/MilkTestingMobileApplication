@@ -21,11 +21,7 @@ const Tab = createBottomTabNavigator();
 
 const HomeStack = () => (
   <Stack.Navigator>
-    <Stack.Screen
-      name="Home"
-      component={Home}
-      options={{title: 'Start Test'}}
-    />
+    <Stack.Screen name="Home" component={Home} options={{headerShown: false}} />
     <Stack.Screen
       name="Camera"
       component={CameraScreen}

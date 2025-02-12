@@ -16,7 +16,6 @@ type Props = NativeStackScreenProps<RootStackParamList, 'Camera'>;
 
 const CameraScreen: React.FC<Props> = ({route, navigation}) => {
   const [image, setImage] = useState<string | null>(null);
-  const [result, setResult] = useState<string | null>(null);
   const [loading, setLoading] = useState<boolean>(false);
 
   const captureImage = async () => {
@@ -37,30 +36,13 @@ const CameraScreen: React.FC<Props> = ({route, navigation}) => {
 
   const analyzeImage = async () => {
     if (!image) return;
-
     setLoading(true);
-    const formData = new FormData();
-    formData.append('image', {
-      uri: image,
-      type: 'image/jpeg',
-      name: 'test.jpg',
-    } as any);
 
-    try {
-      const response = await fetch('http://43.204.214.166:8160/predict', {
-        method: 'POST',
-        body: formData,
-      });
-
-      const data = await response.json();
-      setResult(data.result);
-      navigation.navigate('Results', {result: data.result}); // Navigate to Results screen
-    } catch (error) {
-      console.error('Error analyzing image:', error);
-      Alert.alert('Error', 'Failed to analyze image. Please try again.');
-    } finally {
+    // Simulated API delay for result analysis
+    setTimeout(() => {
       setLoading(false);
-    }
+      navigation.navigate('Results', {result: 'Test Result: Positive'});
+    }, 2000);
   };
 
   return (
@@ -71,7 +53,7 @@ const CameraScreen: React.FC<Props> = ({route, navigation}) => {
         <Image source={{uri: image}} style={styles.image} />
       ) : (
         <View style={styles.placeholder}>
-          <Text style={styles.placeholderText}>No image captured</Text>
+          <Text style={styles.placeholderText}>Align sample inside frame</Text>
         </View>
       )}
 
@@ -80,7 +62,7 @@ const CameraScreen: React.FC<Props> = ({route, navigation}) => {
         onPress={captureImage}
         disabled={loading}>
         <Text style={styles.buttonText}>
-          {image ? 'Recapture Image' : 'Capture Image'}
+          {image ? 'Retake Image' : 'Capture Image'}
         </Text>
       </TouchableOpacity>
 
@@ -145,7 +127,7 @@ const styles = StyleSheet.create({
     width: '100%',
   },
   analyzeButton: {
-    backgroundColor: '#03dac6', // Teal color for the analyze button
+    backgroundColor: '#03dac6',
   },
   buttonText: {
     color: '#fff',

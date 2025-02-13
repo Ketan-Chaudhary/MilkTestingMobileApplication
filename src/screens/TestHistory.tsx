@@ -1,6 +1,7 @@
 import React, {useEffect, useState} from 'react';
 import {View, Text, FlatList, StyleSheet, TouchableOpacity} from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import {colors, typography} from '../styles';
 
 interface TestResult {
   test: string;
@@ -37,10 +38,10 @@ const TestHistory: React.FC = () => {
 
   return (
     <View style={styles.container}>
-      <Text style={styles.title}>Test History</Text>
+      <Text style={typography.title}>Test History</Text>
 
       {history.length === 0 ? (
-        <Text style={styles.noHistory}>No test history available.</Text>
+        <Text style={typography.caption}>No test history available.</Text>
       ) : (
         <FlatList
           data={history.reverse()} // Show latest results first
@@ -70,57 +71,38 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     padding: 20,
-    backgroundColor: '#ffffff',
-  },
-  title: {
-    fontSize: 24,
-    fontWeight: 'bold',
-    marginBottom: 20,
-    textAlign: 'center',
-    color: '#6200ee',
-  },
-  noHistory: {
-    fontSize: 18,
-    color: '#666',
-    textAlign: 'center',
-    marginTop: 20,
+    backgroundColor: colors.background,
   },
   resultItem: {
-    backgroundColor: '#f8f8f8',
+    backgroundColor: colors.surface,
     padding: 15,
     marginVertical: 8,
     borderRadius: 10,
     elevation: 3,
-    shadowColor: '#000',
-    shadowOpacity: 0.1,
-    shadowOffset: {width: 0, height: 2},
-    shadowRadius: 3,
   },
   testName: {
-    fontSize: 18,
+    ...typography.body,
     fontWeight: 'bold',
-    color: '#6200ee',
+    color: colors.primary,
   },
   result: {
-    fontSize: 16,
-    color: '#333',
+    ...typography.body,
+    color: colors.text,
   },
   date: {
-    fontSize: 14,
-    color: '#666',
-    marginTop: 5,
+    ...typography.caption,
+    color: colors.textSecondary,
   },
   clearButton: {
-    backgroundColor: '#d32f2f',
+    backgroundColor: colors.error,
     padding: 12,
     borderRadius: 10,
     alignItems: 'center',
     marginTop: 20,
   },
   clearButtonText: {
-    color: '#fff',
-    fontSize: 16,
-    fontWeight: 'bold',
+    ...typography.body,
+    color: colors.surface,
   },
 });
 

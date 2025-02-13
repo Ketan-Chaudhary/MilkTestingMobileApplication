@@ -1,7 +1,9 @@
 import React from 'react';
 import {View, Text, StyleSheet, TouchableOpacity} from 'react-native';
+import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
 import {NativeStackScreenProps} from '@react-navigation/native-stack';
 import {RootStackParamList} from '../../App';
+import {colors, typography} from '../styles';
 
 type Props = NativeStackScreenProps<RootStackParamList, 'Results'>;
 
@@ -10,10 +12,11 @@ const ResultsScreen: React.FC<Props> = ({route, navigation}) => {
 
   return (
     <View style={styles.container}>
-      <Text style={styles.title}>Test Results</Text>
+      <Icon name="check-circle" size={100} color={colors.secondary} />
+      <Text style={typography.title}>Test Results</Text>
 
       <View style={styles.resultContainer}>
-        <Text style={styles.resultText}>{result}</Text>
+        <Text style={typography.body}>{result}</Text>
       </View>
 
       <TouchableOpacity
@@ -37,30 +40,19 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
     padding: 20,
-    backgroundColor: '#ffffff',
-  },
-  title: {
-    fontSize: 24,
-    fontWeight: 'bold',
-    color: '#6200ee',
-    marginBottom: 20,
+    backgroundColor: colors.background,
   },
   resultContainer: {
     width: '90%',
     padding: 20,
-    backgroundColor: '#f8f8f8',
+    backgroundColor: colors.surface,
     borderRadius: 10,
     elevation: 3,
     alignItems: 'center',
     marginBottom: 20,
   },
-  resultText: {
-    fontSize: 18,
-    fontWeight: 'bold',
-    color: '#333',
-  },
   button: {
-    backgroundColor: '#6200ee',
+    backgroundColor: colors.primary,
     padding: 15,
     borderRadius: 10,
     alignItems: 'center',
@@ -68,12 +60,11 @@ const styles = StyleSheet.create({
     marginVertical: 10,
   },
   retakeButton: {
-    backgroundColor: '#03dac6',
+    backgroundColor: colors.secondary,
   },
   buttonText: {
-    color: '#fff',
-    fontSize: 18,
-    fontWeight: 'bold',
+    ...typography.body,
+    color: colors.surface,
   },
 });
 

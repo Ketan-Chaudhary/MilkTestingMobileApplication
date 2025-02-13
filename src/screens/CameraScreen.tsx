@@ -8,10 +8,12 @@ import {
   ActivityIndicator,
   Alert,
 } from 'react-native';
+import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
 import {launchCamera, CameraOptions} from 'react-native-image-picker';
 import {NativeStackScreenProps} from '@react-navigation/native-stack';
 import {RootStackParamList} from '../../App';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import {colors, typography} from '../styles';
 
 type Props = NativeStackScreenProps<RootStackParamList, 'Camera'>;
 
@@ -33,6 +35,28 @@ const CameraScreen: React.FC<Props> = ({route, navigation}) => {
         Alert.alert('Error', 'Failed to capture image. Please try again.');
       }
     });
+  };
+
+  // Function to store the test result locally
+  const storeResultLocally = async (test: string, result: string) => {
+    try {
+      // Fetch existing results from AsyncStorage
+      const existingResults = await AsyncStorage.getItem('testResults');
+      const resultsArray = existingResults ? JSON.parse(existingResults) : [];
+
+      // Add the new result
+      const newResult = {
+        test,
+        result,
+        date: new Date().toISOString(), // Add a timestamp
+      };
+      resultsArray.push(newResult);
+
+      // Save the updated results back to AsyncStorage
+      await AsyncStorage.setItem('testResults', JSON.stringify(resultsArray));
+    } catch (error) {
+      console.error('Failed to save result:', error);
+    }
   };
 
   const analyzeImage = async () => {
@@ -60,6 +84,8 @@ const CameraScreen: React.FC<Props> = ({route, navigation}) => {
 
       const data = await response.json();
       if (data?.result) {
+        // Store the result locally before navigating
+        await storeResultLocally(route.params.test, data.result);
         navigation.navigate('Results', {result: data.result});
       } else {
         Alert.alert('Error', 'Unexpected response from server.');
@@ -74,13 +100,14 @@ const CameraScreen: React.FC<Props> = ({route, navigation}) => {
 
   return (
     <View style={styles.container}>
-      <Text style={styles.title}>{route.params.test} Test</Text>
+      <Text style={typography.title}>{route.params.test} Test</Text>
 
       {image ? (
         <Image source={{uri: image}} style={styles.image} />
       ) : (
         <View style={styles.placeholder}>
-          <Text style={styles.placeholderText}>No image captured</Text>
+          <Icon name="image-off" size={50} color={colors.textSecondary} />
+          <Text style={typography.caption}>No image captured</Text>
         </View>
       )}
 
@@ -88,6 +115,11 @@ const CameraScreen: React.FC<Props> = ({route, navigation}) => {
         style={styles.button}
         onPress={captureImage}
         disabled={loading}>
+        <Icon
+          name={image ? 'camera-retake' : 'camera'}
+          size={24}
+          color={colors.surface}
+        />
         <Text style={styles.buttonText}>
           {image ? 'Recapture Image' : 'Capture Image'}
         </Text>
@@ -98,13 +130,14 @@ const CameraScreen: React.FC<Props> = ({route, navigation}) => {
           style={[styles.button, styles.analyzeButton]}
           onPress={analyzeImage}
           disabled={loading}>
+          <Icon name="magnify" size={24} color={colors.surface} />
           <Text style={styles.buttonText}>
             {loading ? 'Analyzing...' : 'Analyze Image'}
           </Text>
         </TouchableOpacity>
       )}
 
-      {loading && <ActivityIndicator size="large" color="#6200ee" />}
+      {loading && <ActivityIndicator size="large" color={colors.primary} />}
     </View>
   );
 };
@@ -115,13 +148,7 @@ const styles = StyleSheet.create({
     padding: 20,
     justifyContent: 'center',
     alignItems: 'center',
-    backgroundColor: '#ffffff',
-  },
-  title: {
-    fontSize: 22,
-    fontWeight: 'bold',
-    marginBottom: 20,
-    color: '#6200ee',
+    backgroundColor: colors.background,
   },
   image: {
     width: 300,
@@ -129,37 +156,35 @@ const styles = StyleSheet.create({
     marginTop: 10,
     borderRadius: 10,
     borderWidth: 2,
-    borderColor: '#6200ee',
+    borderColor: colors.primary,
   },
   placeholder: {
     width: 300,
     height: 300,
     justifyContent: 'center',
     alignItems: 'center',
-    backgroundColor: '#e0e0e0',
+    backgroundColor: colors.surface,
     borderRadius: 10,
     borderWidth: 2,
-    borderColor: '#6200ee',
-  },
-  placeholderText: {
-    fontSize: 16,
-    color: '#666',
+    borderColor: colors.primary,
   },
   button: {
-    backgroundColor: '#6200ee',
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: colors.primary,
     padding: 15,
     borderRadius: 10,
     marginVertical: 10,
-    alignItems: 'center',
     width: '100%',
+    justifyContent: 'center',
   },
   analyzeButton: {
-    backgroundColor: '#03dac6',
+    backgroundColor: colors.secondary,
   },
   buttonText: {
-    color: '#fff',
-    fontSize: 18,
-    fontWeight: 'bold',
+    ...typography.body,
+    marginLeft: 10,
+    color: colors.surface,
   },
 });
 

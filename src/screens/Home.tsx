@@ -1,15 +1,17 @@
 import React, {useState} from 'react';
 import {View, Text, TouchableOpacity, StyleSheet, Modal} from 'react-native';
+import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
 import {NativeStackScreenProps} from '@react-navigation/native-stack';
 import {RootStackParamList} from '../../App';
 import StepInstructions from '../components/StepInstructions';
+import {colors, typography} from '../styles';
 
 type Props = NativeStackScreenProps<RootStackParamList, 'Home'>;
 
 const tests = [
-  {id: '1', name: 'Starch'},
-  {id: '2', name: 'Urea'},
-  {id: '3', name: 'Detergent'},
+  {id: '1', name: 'Starch', icon: 'flask'},
+  {id: '2', name: 'Urea', icon: 'water'},
+  {id: '3', name: 'Detergent', icon: 'soap'},
 ];
 
 const Home: React.FC<Props> = ({navigation}) => {
@@ -17,12 +19,13 @@ const Home: React.FC<Props> = ({navigation}) => {
 
   return (
     <View style={styles.container}>
-      <Text style={styles.title}>Select a Test</Text>
+      <Text style={typography.title}>Select a Test</Text>
       {tests.map(test => (
         <TouchableOpacity
           key={test.id}
           style={styles.button}
           onPress={() => setSelectedTest(test.name)}>
+          <Icon name={test.icon} size={24} color={colors.primary} />
           <Text style={styles.buttonText}>{test.name}</Text>
         </TouchableOpacity>
       ))}
@@ -45,26 +48,22 @@ const styles = StyleSheet.create({
     padding: 20,
     justifyContent: 'center',
     alignItems: 'center',
-    backgroundColor: '#ffffff',
-  },
-  title: {
-    fontSize: 24,
-    fontWeight: 'bold',
-    marginBottom: 20,
-    color: '#6200ee',
+    backgroundColor: colors.background,
   },
   button: {
-    backgroundColor: '#6200ee',
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: colors.surface,
     padding: 15,
     borderRadius: 10,
     marginVertical: 10,
-    alignItems: 'center',
     width: '80%',
+    elevation: 3,
   },
   buttonText: {
-    color: '#fff',
-    fontSize: 18,
-    fontWeight: 'bold',
+    ...typography.body,
+    marginLeft: 10,
+    color: colors.text,
   },
 });
 

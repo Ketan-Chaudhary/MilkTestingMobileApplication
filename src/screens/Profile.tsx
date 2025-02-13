@@ -7,11 +7,13 @@ const Profile: React.FC = () => {
   return (
     <View style={styles.container}>
       <Image
-        source={{uri: 'https://via.placeholder.com/100'}}
+        source={{
+          uri: 'https://images.unsplash.com/photo-1511367461989-f85a21fda167?q=80&w=1931&auto=format&fit=crop&ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D',
+        }}
         style={styles.avatar}
       />
-      <Text style={typography.title}>John Doe</Text>
-      <Text style={typography.caption}>johndoe@example.com</Text>
+      <Text style={typography.title}>Ketan Chaudhary</Text>
+      <Text style={typography.caption}>KetanChaudary@example.com</Text>
 
       <View style={styles.statsContainer}>
         <Text style={typography.subtitle}>Test Statistics</Text>

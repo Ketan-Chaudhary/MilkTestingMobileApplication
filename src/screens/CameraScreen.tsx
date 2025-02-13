@@ -35,14 +35,40 @@ const CameraScreen: React.FC<Props> = ({route, navigation}) => {
   };
 
   const analyzeImage = async () => {
-    if (!image) return;
-    setLoading(true);
+    if (!image) {
+      Alert.alert('Error', 'Please capture an image first.');
+      return;
+    }
 
-    // Simulated API delay for result analysis
-    setTimeout(() => {
+    setLoading(true);
+    const formData = new FormData();
+    formData.append('image', {
+      uri: image,
+      type: 'image/jpeg',
+      name: 'test.jpg',
+    } as any);
+
+    try {
+      const response = await fetch('http://65.0.99.47:8160/predict', {
+        method: 'POST',
+        body: formData,
+        headers: {
+          'Content-Type': 'multipart/form-data',
+        },
+      });
+
+      const data = await response.json();
+      if (data?.result) {
+        navigation.navigate('Results', {result: data.result});
+      } else {
+        Alert.alert('Error', 'Unexpected response from server.');
+      }
+    } catch (error) {
+      console.error('Error analyzing image:', error);
+      Alert.alert('Error', 'Failed to analyze image. Please try again.');
+    } finally {
       setLoading(false);
-      navigation.navigate('Results', {result: 'Test Result: Positive'});
-    }, 2000);
+    }
   };
 
   return (
@@ -53,7 +79,7 @@ const CameraScreen: React.FC<Props> = ({route, navigation}) => {
         <Image source={{uri: image}} style={styles.image} />
       ) : (
         <View style={styles.placeholder}>
-          <Text style={styles.placeholderText}>Align sample inside frame</Text>
+          <Text style={styles.placeholderText}>No image captured</Text>
         </View>
       )}
 
@@ -62,7 +88,7 @@ const CameraScreen: React.FC<Props> = ({route, navigation}) => {
         onPress={captureImage}
         disabled={loading}>
         <Text style={styles.buttonText}>
-          {image ? 'Retake Image' : 'Capture Image'}
+          {image ? 'Recapture Image' : 'Capture Image'}
         </Text>
       </TouchableOpacity>
 

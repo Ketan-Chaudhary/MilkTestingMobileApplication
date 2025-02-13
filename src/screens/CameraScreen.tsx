@@ -35,18 +35,6 @@ const CameraScreen: React.FC<Props> = ({route, navigation}) => {
     });
   };
 
-  const storeResultLocally = async (test: string, result: string) => {
-    try {
-      const existingResults = await AsyncStorage.getItem('testResults');
-      const resultsArray = existingResults ? JSON.parse(existingResults) : [];
-      const newResult = {test, result, date: new Date().toISOString()};
-      resultsArray.push(newResult);
-      await AsyncStorage.setItem('testResults', JSON.stringify(resultsArray));
-    } catch (error) {
-      console.error('Failed to save result:', error);
-    }
-  };
-
   const analyzeImage = async () => {
     if (!image) {
       Alert.alert('Error', 'Please capture an image first.');
@@ -62,7 +50,7 @@ const CameraScreen: React.FC<Props> = ({route, navigation}) => {
     } as any);
 
     try {
-      const response = await fetch('http://65.0.99.47:8160/predict', {
+      const response = await fetch('http://65.2.69.148:8160/predict', {
         method: 'POST',
         body: formData,
         headers: {
@@ -72,7 +60,6 @@ const CameraScreen: React.FC<Props> = ({route, navigation}) => {
 
       const data = await response.json();
       if (data?.result) {
-        await storeResultLocally(route.params.test, data.result); // Store result locally
         navigation.navigate('Results', {result: data.result});
       } else {
         Alert.alert('Error', 'Unexpected response from server.');
@@ -128,7 +115,7 @@ const styles = StyleSheet.create({
     padding: 20,
     justifyContent: 'center',
     alignItems: 'center',
-    backgroundColor: '#f8f8f8',
+    backgroundColor: '#ffffff',
   },
   title: {
     fontSize: 22,

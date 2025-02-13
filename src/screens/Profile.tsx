@@ -26,7 +26,7 @@ const styles = StyleSheet.create({
     flex: 1,
     alignItems: 'center',
     padding: 20,
-    backgroundColor: '#f8f8f8',
+    backgroundColor: '#ffffff',
   },
   avatar: {
     width: 100,
@@ -38,6 +38,7 @@ const styles = StyleSheet.create({
     fontSize: 22,
     fontWeight: 'bold',
     marginBottom: 5,
+    color: '#6200ee',
   },
   email: {
     fontSize: 16,
@@ -47,7 +48,7 @@ const styles = StyleSheet.create({
   statsContainer: {
     width: '100%',
     padding: 15,
-    backgroundColor: '#ffffff',
+    backgroundColor: '#f8f8f8',
     borderRadius: 10,
     elevation: 2,
   },
@@ -55,10 +56,12 @@ const styles = StyleSheet.create({
     fontSize: 18,
     fontWeight: 'bold',
     marginBottom: 10,
+    color: '#6200ee',
   },
   statsText: {
     fontSize: 16,
     marginBottom: 5,
+    color: '#333',
   },
 });
 

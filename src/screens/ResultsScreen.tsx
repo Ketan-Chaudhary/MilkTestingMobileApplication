@@ -37,7 +37,7 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
     padding: 20,
-    backgroundColor: '#f8f8f8',
+    backgroundColor: '#ffffff',
   },
   title: {
     fontSize: 24,
@@ -48,7 +48,7 @@ const styles = StyleSheet.create({
   resultContainer: {
     width: '90%',
     padding: 20,
-    backgroundColor: '#fff',
+    backgroundColor: '#f8f8f8',
     borderRadius: 10,
     elevation: 3,
     alignItems: 'center',

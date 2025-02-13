@@ -37,21 +37,23 @@ const Help: React.FC = () => {
 const styles = StyleSheet.create({
   container: {
     padding: 20,
-    backgroundColor: '#f8f8f8',
+    backgroundColor: '#ffffff',
   },
   title: {
     fontSize: 24,
     fontWeight: 'bold',
     marginBottom: 20,
+    color: '#6200ee',
   },
   subtitle: {
     fontSize: 20,
     fontWeight: 'bold',
     marginTop: 20,
     marginBottom: 10,
+    color: '#6200ee',
   },
   faqContainer: {
-    backgroundColor: '#ffffff',
+    backgroundColor: '#f8f8f8',
     padding: 15,
     borderRadius: 10,
     elevation: 2,
@@ -60,14 +62,17 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontWeight: 'bold',
     marginTop: 10,
+    color: '#333',
   },
   answer: {
     fontSize: 16,
     marginBottom: 10,
+    color: '#666',
   },
   guideline: {
     fontSize: 16,
     marginBottom: 5,
+    color: '#333',
   },
 });
 

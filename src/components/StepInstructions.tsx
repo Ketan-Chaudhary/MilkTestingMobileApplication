@@ -14,7 +14,7 @@ const StepInstructions: React.FC<StepInstructionsProps> = ({onStartTest}) => {
       </Text>
       <Text style={styles.step}>2. Ensure good lighting conditions.</Text>
       <Text style={styles.step}>3. Avoid reflections or glare.</Text>
-      <Button title="Proceed to Camera" onPress={onStartTest} />
+      <Button title="Proceed to Camera" onPress={onStartTest} color="#6200ee" />
     </View>
   );
 };
@@ -25,16 +25,18 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
     padding: 20,
-    backgroundColor: '#f8f8f8',
+    backgroundColor: '#ffffff',
   },
   title: {
     fontSize: 24,
     fontWeight: 'bold',
-    marginBottom: 15,
+    marginBottom: 20,
+    color: '#6200ee',
   },
   step: {
     fontSize: 16,
     marginBottom: 10,
+    color: '#333',
   },
 });
 

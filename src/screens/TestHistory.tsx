@@ -70,7 +70,7 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     padding: 20,
-    backgroundColor: '#f8f8f8',
+    backgroundColor: '#ffffff',
   },
   title: {
     fontSize: 24,
@@ -86,7 +86,7 @@ const styles = StyleSheet.create({
     marginTop: 20,
   },
   resultItem: {
-    backgroundColor: '#ffffff',
+    backgroundColor: '#f8f8f8',
     padding: 15,
     marginVertical: 8,
     borderRadius: 10,

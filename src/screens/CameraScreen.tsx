@@ -11,6 +11,7 @@ import {
 import {launchCamera, CameraOptions} from 'react-native-image-picker';
 import {NativeStackScreenProps} from '@react-navigation/native-stack';
 import {RootStackParamList} from '../../App';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
 type Props = NativeStackScreenProps<RootStackParamList, 'Camera'>;
 
@@ -32,6 +33,18 @@ const CameraScreen: React.FC<Props> = ({route, navigation}) => {
         Alert.alert('Error', 'Failed to capture image. Please try again.');
       }
     });
+  };
+
+  const storeResultLocally = async (test: string, result: string) => {
+    try {
+      const existingResults = await AsyncStorage.getItem('testResults');
+      const resultsArray = existingResults ? JSON.parse(existingResults) : [];
+      const newResult = {test, result, date: new Date().toISOString()};
+      resultsArray.push(newResult);
+      await AsyncStorage.setItem('testResults', JSON.stringify(resultsArray));
+    } catch (error) {
+      console.error('Failed to save result:', error);
+    }
   };
 
   const analyzeImage = async () => {
@@ -59,6 +72,7 @@ const CameraScreen: React.FC<Props> = ({route, navigation}) => {
 
       const data = await response.json();
       if (data?.result) {
+        await storeResultLocally(route.params.test, data.result); // Store result locally
         navigation.navigate('Results', {result: data.result});
       } else {
         Alert.alert('Error', 'Unexpected response from server.');

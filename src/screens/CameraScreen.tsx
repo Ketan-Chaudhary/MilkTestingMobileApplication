@@ -1,15 +1,23 @@
-import React, {useState} from 'react';
+import React, {useState, useEffect, useRef} from 'react';
 import {
   View,
   Text,
   TouchableOpacity,
-  Image,
   StyleSheet,
   ActivityIndicator,
   Alert,
+  PermissionsAndroid,
+  Platform,
+  Image,
 } from 'react-native';
 import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
-import {launchCamera, CameraOptions} from 'react-native-image-picker';
+import {
+  Camera,
+  useCameraDevice,
+  useCameraPermission,
+  useCameraFormat,
+} from 'react-native-vision-camera';
+import ImagePicker from 'react-native-image-crop-picker';
 import {NativeStackScreenProps} from '@react-navigation/native-stack';
 import {RootStackParamList} from '../../App';
 import AsyncStorage from '@react-native-async-storage/async-storage';
@@ -18,63 +26,117 @@ import {colors, typography} from '../styles';
 type Props = NativeStackScreenProps<RootStackParamList, 'Camera'>;
 
 const CameraScreen: React.FC<Props> = ({route, navigation}) => {
-  const [image, setImage] = useState<string | null>(null);
-  const [loading, setLoading] = useState<boolean>(false);
+  const camera = useRef<Camera>(null);
+  const {hasPermission, requestPermission} = useCameraPermission();
+  const [isActive, setIsActive] = useState(true);
+  const [loading, setLoading] = useState(false);
+  const [capturedPhoto, setCapturedPhoto] = useState<string | null>(null);
+  const device = useCameraDevice('back');
 
-  const captureImage = async () => {
-    const options: CameraOptions = {
-      mediaType: 'photo',
-      saveToPhotos: false,
+  // Optimized camera format configuration
+  const format = useCameraFormat(device, [
+    {photoAspectRatio: 4 / 3},
+    {photoResolution: 'max'},
+    {fps: 30},
+  ]);
+
+  // Grid overlay for test strip alignment
+  const GridOverlay = () => (
+    <View style={styles.gridContainer}>
+      <View style={styles.stripGuide}>
+        <View style={styles.guideNotchTop} />
+        <View style={styles.guideNotchBottom} />
+      </View>
+    </View>
+  );
+
+  // Check camera permissions
+  useEffect(() => {
+    const checkPermissions = async () => {
+      if (Platform.OS === 'android') {
+        const status = await PermissionsAndroid.request(
+          PermissionsAndroid.PERMISSIONS.CAMERA,
+        );
+        if (status !== 'granted') {
+          Alert.alert(
+            'Permission required',
+            'Camera access is needed to take photos',
+          );
+          navigation.goBack();
+        }
+      } else if (!hasPermission) {
+        const requested = await requestPermission();
+        if (!requested) {
+          Alert.alert(
+            'Permission required',
+            'Camera access is needed to take photos',
+          );
+          navigation.goBack();
+        }
+      }
     };
 
-    launchCamera(options, response => {
-      if (response.assets && response.assets.length > 0) {
-        const uri = response.assets[0]?.uri ?? null;
-        setImage(uri);
-      } else if (response.errorCode) {
-        Alert.alert('Error', 'Failed to capture image. Please try again.');
-      }
-    });
-  };
+    checkPermissions();
+  }, [hasPermission, requestPermission, navigation]);
 
-  // Function to store the test result locally
-  const storeResultLocally = async (test: string, result: string) => {
-    try {
-      // Fetch existing results from AsyncStorage
-      const existingResults = await AsyncStorage.getItem('testResults');
-      const resultsArray = existingResults ? JSON.parse(existingResults) : [];
-
-      // Add the new result
-      const newResult = {
-        test,
-        result,
-        date: new Date().toISOString(), // Add a timestamp
-      };
-      resultsArray.push(newResult);
-
-      // Save the updated results back to AsyncStorage
-      await AsyncStorage.setItem('testResults', JSON.stringify(resultsArray));
-    } catch (error) {
-      console.error('Failed to save result:', error);
-    }
-  };
-
-  const analyzeImage = async () => {
-    if (!image) {
-      Alert.alert('Error', 'Please capture an image first.');
+  // Capture and crop image
+  const captureImage = async () => {
+    if (!camera.current || !device) {
+      Alert.alert('Error', 'Camera not ready');
       return;
     }
 
     setLoading(true);
-    const formData = new FormData();
-    formData.append('image', {
-      uri: image,
-      type: 'image/jpeg',
-      name: 'test.jpg',
-    } as any);
-
     try {
-      const response = await fetch('http://65.2.69.148:8160/predict', {
+      const photo = await camera.current.takePhoto({
+        flash: 'off',
+        enableShutterSound: false,
+      });
+
+      // Crop image using react-native-image-crop-picker
+      const croppedImage = await ImagePicker.openCropper({
+        path: `file://${photo.path}`,
+        width: 300, // Desired width of the cropped image
+        height: 1200, // Desired height of the cropped image
+        cropping: true,
+        mediaType: 'photo',
+        cropperCircleOverlay: false,
+        compressImageQuality: 0.9,
+        freeStyleCropEnabled: true, // Allow free-style cropping
+        cropperCancelText: 'Cancel', // Custom cancel text
+        cropperChooseText: 'Select', // Custom choose text
+      });
+
+      setCapturedPhoto(croppedImage.path);
+      setIsActive(false);
+    } catch (error) {
+      console.error('Capture error:', error);
+      Alert.alert('Error', 'Failed to capture image. Please try again.');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Retake photo
+  const handleRetake = () => {
+    setCapturedPhoto(null);
+    setIsActive(true);
+  };
+
+  // Analyze the captured image
+  const analyzeImage = async (imagePath: string) => {
+    if (!imagePath) return;
+
+    setLoading(true);
+    try {
+      const formData = new FormData();
+      formData.append('image', {
+        uri: `file://${imagePath}`,
+        type: 'image/jpeg',
+        name: 'test.jpg',
+      } as any);
+
+      const response = await fetch('http://35.154.224.216:8160/predict', {
         method: 'POST',
         body: formData,
         headers: {
@@ -84,107 +146,220 @@ const CameraScreen: React.FC<Props> = ({route, navigation}) => {
 
       const data = await response.json();
       if (data?.result) {
-        // Store the result locally before navigating
         await storeResultLocally(route.params.test, data.result);
         navigation.navigate('Results', {result: data.result});
       } else {
         Alert.alert('Error', 'Unexpected response from server.');
       }
     } catch (error) {
-      console.error('Error analyzing image:', error);
+      console.error('Analysis error:', error);
       Alert.alert('Error', 'Failed to analyze image. Please try again.');
     } finally {
       setLoading(false);
     }
   };
 
+  // Trigger image analysis
+  const handleAnalyze = async () => {
+    if (capturedPhoto) {
+      await analyzeImage(capturedPhoto);
+    }
+  };
+
+  // Store result locally
+  const storeResultLocally = async (test: string, result: string) => {
+    try {
+      const existingResults = await AsyncStorage.getItem('testResults');
+      const resultsArray = existingResults ? JSON.parse(existingResults) : [];
+      resultsArray.push({
+        test,
+        result,
+        date: new Date().toISOString(),
+      });
+      await AsyncStorage.setItem('testResults', JSON.stringify(resultsArray));
+    } catch (error) {
+      console.error('Storage error:', error);
+    }
+  };
+
+  // Permission handling UI
+  if (!hasPermission) {
+    return (
+      <View style={styles.container}>
+        <ActivityIndicator size="large" color={colors.primary} />
+        <Text style={styles.permissionText}>Requesting camera access...</Text>
+      </View>
+    );
+  }
+
+  // Device availability handling UI
+  if (!device) {
+    return (
+      <View style={styles.container}>
+        <Text style={typography.title}>Camera not available</Text>
+        <Text style={styles.permissionText}>
+          Could not access camera device
+        </Text>
+      </View>
+    );
+  }
+
+  // Main UI
   return (
     <View style={styles.container}>
-      <Text style={typography.title}>{route.params.test} Test</Text>
+      {capturedPhoto ? (
+        <>
+          <Image
+            source={{uri: `file://${capturedPhoto}`}}
+            style={StyleSheet.absoluteFill}
+            resizeMode="contain"
+          />
+          <View style={styles.previewButtonsContainer}>
+            <TouchableOpacity
+              style={[styles.button, styles.retakeButton]}
+              onPress={handleRetake}>
+              <Icon name="camera-retake" size={24} color={colors.surface} />
+              <Text style={styles.buttonText}>Retake</Text>
+            </TouchableOpacity>
 
-      {image ? (
-        <Image source={{uri: image}} style={styles.image} />
+            <TouchableOpacity
+              style={[styles.button, styles.analyzeButton]}
+              onPress={handleAnalyze}
+              disabled={loading}>
+              {loading ? (
+                <ActivityIndicator color={colors.surface} />
+              ) : (
+                <>
+                  <Icon name="magnify" size={24} color={colors.surface} />
+                  <Text style={styles.buttonText}>Analyze</Text>
+                </>
+              )}
+            </TouchableOpacity>
+          </View>
+        </>
       ) : (
-        <View style={styles.placeholder}>
-          <Icon name="image-off" size={50} color={colors.textSecondary} />
-          <Text style={typography.caption}>No image captured</Text>
-        </View>
+        <>
+          <Camera
+            ref={camera}
+            style={StyleSheet.absoluteFill}
+            device={device}
+            isActive={isActive}
+            photo={true}
+            format={format}
+          />
+          <GridOverlay />
+          <View style={styles.controlsContainer}>
+            <TouchableOpacity
+              style={styles.captureButton}
+              onPress={captureImage}
+              disabled={loading}>
+              {loading ? (
+                <ActivityIndicator color={colors.surface} size={32} />
+              ) : (
+                <Icon name="camera-iris" size={40} color={colors.surface} />
+              )}
+            </TouchableOpacity>
+          </View>
+        </>
       )}
-
-      <TouchableOpacity
-        style={styles.button}
-        onPress={captureImage}
-        disabled={loading}>
-        <Icon
-          name={image ? 'camera-retake' : 'camera'}
-          size={24}
-          color={colors.surface}
-        />
-        <Text style={styles.buttonText}>
-          {image ? 'Recapture Image' : 'Capture Image'}
-        </Text>
-      </TouchableOpacity>
-
-      {image && (
-        <TouchableOpacity
-          style={[styles.button, styles.analyzeButton]}
-          onPress={analyzeImage}
-          disabled={loading}>
-          <Icon name="magnify" size={24} color={colors.surface} />
-          <Text style={styles.buttonText}>
-            {loading ? 'Analyzing...' : 'Analyze Image'}
-          </Text>
-        </TouchableOpacity>
-      )}
-
-      {loading && <ActivityIndicator size="large" color={colors.primary} />}
     </View>
   );
 };
 
+// Styles
 const styles = StyleSheet.create({
   container: {
     flex: 1,
+    backgroundColor: 'black',
+  },
+  permissionText: {
+    ...typography.body,
+    color: colors.text,
+    textAlign: 'center',
+    marginHorizontal: 20,
+    marginTop: 20,
+  },
+  gridContainer: {
+    flex: 1,
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: 'transparent',
+  },
+  stripGuide: {
+    width: '20%',
+    height: '80%',
+    borderColor: 'rgba(255, 255, 255, 0.7)',
+    borderWidth: 2,
+    borderRadius: 8,
+    backgroundColor: 'rgba(0, 0, 0, 0.2)',
+    position: 'relative',
+  },
+  guideNotchTop: {
+    position: 'absolute',
+    top: -2,
+    left: '50%',
+    width: 40,
+    height: 4,
+    backgroundColor: 'rgba(255, 255, 255, 0.7)',
+    marginLeft: -20,
+  },
+  guideNotchBottom: {
+    position: 'absolute',
+    bottom: -2,
+    left: '50%',
+    width: 40,
+    height: 4,
+    backgroundColor: 'rgba(255, 255, 255, 0.7)',
+    marginLeft: -20,
+  },
+  controlsContainer: {
+    position: 'absolute',
+    bottom: 40,
+    width: '100%',
+    alignItems: 'center',
+  },
+  captureButton: {
+    backgroundColor: colors.primary,
+    borderRadius: 50,
     padding: 20,
-    justifyContent: 'center',
-    alignItems: 'center',
-    backgroundColor: colors.background,
+    elevation: 5,
+    shadowColor: colors.text,
+    shadowOffset: {width: 0, height: 2},
+    shadowOpacity: 0.3,
+    shadowRadius: 3,
   },
-  image: {
-    width: 300,
-    height: 300,
-    marginTop: 10,
-    borderRadius: 10,
-    borderWidth: 2,
-    borderColor: colors.primary,
-  },
-  placeholder: {
-    width: 300,
-    height: 300,
-    justifyContent: 'center',
-    alignItems: 'center',
-    backgroundColor: colors.surface,
-    borderRadius: 10,
-    borderWidth: 2,
-    borderColor: colors.primary,
+  previewButtonsContainer: {
+    position: 'absolute',
+    bottom: 40,
+    width: '100%',
+    flexDirection: 'row',
+    justifyContent: 'space-around',
+    paddingHorizontal: 20,
   },
   button: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: colors.primary,
-    padding: 15,
-    borderRadius: 10,
-    marginVertical: 10,
-    width: '100%',
-    justifyContent: 'center',
+    paddingVertical: 15,
+    paddingHorizontal: 25,
+    borderRadius: 25,
+    elevation: 3,
+  },
+  retakeButton: {
+    backgroundColor: colors.secondary,
   },
   analyzeButton: {
-    backgroundColor: colors.secondary,
+    backgroundColor: colors.primary,
   },
   buttonText: {
     ...typography.body,
     marginLeft: 10,
     color: colors.surface,
+    fontWeight: 'bold',
   },
 });
 

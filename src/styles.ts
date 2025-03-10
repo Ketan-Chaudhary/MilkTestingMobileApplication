@@ -12,12 +12,12 @@ export const colors = {
   export const typography = {
     title: {
       fontSize: 24,
-      fontWeight: 'bold',
+      fontWeight: 'bold' as const,
       color: colors.text,
     },
     subtitle: {
       fontSize: 20,
-      fontWeight: 'bold',
+      fontWeight: 'bold' as const,
       color: colors.text,
     },
     body: {

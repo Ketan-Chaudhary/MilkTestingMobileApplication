@@ -31,16 +31,15 @@ const CameraScreen: React.FC<Props> = ({route, navigation}) => {
   const [isActive, setIsActive] = useState(true);
   const [loading, setLoading] = useState(false);
   const [capturedPhoto, setCapturedPhoto] = useState<string | null>(null);
+  const [flashMode, setFlashMode] = useState<'off' | 'on' | 'auto'>('off'); // Flash state
   const device = useCameraDevice('back');
 
-  // Optimized camera format configuration
   const format = useCameraFormat(device, [
     {photoAspectRatio: 4 / 3},
     {photoResolution: 'max'},
     {fps: 30},
   ]);
 
-  // Grid overlay for test strip alignment
   const GridOverlay = () => (
     <View style={styles.gridContainer}>
       <View style={styles.stripGuide}>
@@ -89,22 +88,22 @@ const CameraScreen: React.FC<Props> = ({route, navigation}) => {
     setLoading(true);
     try {
       const photo = await camera.current.takePhoto({
-        flash: 'off',
+        flash: flashMode, // Use flash mode here
         enableShutterSound: false,
       });
 
       // Crop image using react-native-image-crop-picker
       const croppedImage = await ImagePicker.openCropper({
         path: `file://${photo.path}`,
-        width: 300, // Desired width of the cropped image
-        height: 1200, // Desired height of the cropped image
+        width: 300,
+        height: 1200,
         cropping: true,
         mediaType: 'photo',
         cropperCircleOverlay: false,
         compressImageQuality: 0.9,
-        freeStyleCropEnabled: true, // Allow free-style cropping
-        cropperCancelText: 'Cancel', // Custom cancel text
-        cropperChooseText: 'Select', // Custom choose text
+        freeStyleCropEnabled: true,
+        cropperCancelText: 'Cancel',
+        cropperChooseText: 'Select',
       });
 
       setCapturedPhoto(croppedImage.path);
@@ -182,7 +181,17 @@ const CameraScreen: React.FC<Props> = ({route, navigation}) => {
     }
   };
 
-  // Permission handling UI
+  // Flash toggle function
+  const toggleFlashMode = () => {
+    if (flashMode === 'off') {
+      setFlashMode('on');
+    } else if (flashMode === 'on') {
+      setFlashMode('auto');
+    } else {
+      setFlashMode('off');
+    }
+  };
+
   if (!hasPermission) {
     return (
       <View style={styles.container}>
@@ -192,7 +201,6 @@ const CameraScreen: React.FC<Props> = ({route, navigation}) => {
     );
   }
 
-  // Device availability handling UI
   if (!device) {
     return (
       <View style={styles.container}>
@@ -204,7 +212,6 @@ const CameraScreen: React.FC<Props> = ({route, navigation}) => {
     );
   }
 
-  // Main UI
   return (
     <View style={styles.container}>
       {capturedPhoto ? (
@@ -221,7 +228,6 @@ const CameraScreen: React.FC<Props> = ({route, navigation}) => {
               <Icon name="camera-retake" size={24} color={colors.surface} />
               <Text style={styles.buttonText}>Retake</Text>
             </TouchableOpacity>
-
             <TouchableOpacity
               style={[styles.button, styles.analyzeButton]}
               onPress={handleAnalyze}
@@ -258,6 +264,21 @@ const CameraScreen: React.FC<Props> = ({route, navigation}) => {
               ) : (
                 <Icon name="camera-iris" size={40} color={colors.surface} />
               )}
+            </TouchableOpacity>
+            <TouchableOpacity
+              style={styles.flashButton}
+              onPress={toggleFlashMode}>
+              <Icon
+                name={
+                  flashMode === 'off'
+                    ? 'flash-off'
+                    : flashMode === 'on'
+                    ? 'flash'
+                    : 'flash-auto'
+                }
+                size={30}
+                color={colors.surface}
+              />
             </TouchableOpacity>
           </View>
         </>
@@ -360,6 +381,15 @@ const styles = StyleSheet.create({
     marginLeft: 10,
     color: colors.surface,
     fontWeight: 'bold',
+  },
+  flashButton: {
+    position: 'absolute',
+    top: 20,
+    right: 20,
+    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+    borderRadius: 50,
+    padding: 10,
+    elevation: 5,
   },
 });
 
